@@ -1,0 +1,51 @@
+name: workflow-pull-request
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    env:
+      DB_TEST: postgres
+      DB_HOST: postgres
+      DB_USER: user
+      DB_PASSWORD: postgres
+      DB_NAME: github.actions
+      DB_PORT: 5432
+      
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: github-actions
+          POSTGRES_HOST: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    
+    steps:
+      - name: Validar el repositorio
+        uses: actions/checkout@v2
+        
+      - name: Install OpenSSL
+        run: sudo apt-get -qy update && apt-get -qy install openssl
+        
+      - name: Validar Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9.6"
+          architecture: "x64"
+
+      - name: Instalar librerias
+        run: pip3 install -r requirements.txt
+
+      - name: Correr los Tests
+        run: python3 manage.py test
